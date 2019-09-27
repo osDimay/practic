@@ -1,5 +1,5 @@
 <?php
-/* $servername = "localhost";
+$servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "mydb";
@@ -11,7 +11,7 @@ if ($conn->connect_error) {
 }
 //echo "Connection successfully";
 
- */
+
 
 
 
@@ -58,7 +58,7 @@ class DbClass
 		
 
         $sql="SELECT * FROM spisok";
-		$result = $this->conn->prepare($sql);
+        $result = $this->conn->prepare($sql);
         $result->execute();		
 
 			while ($row = $result->fetch(PDO::FETCH_ASSOC)) {   
@@ -66,7 +66,8 @@ class DbClass
 		        $mass[$row["id"]] = array (
 				    "id"=>$row["id"],
 					"name"=>$row["name"],
-					"parent_id"=>$row["parent_id"]
+					"parent_id"=>$row["parent_id"],
+					"creation_time"=>$row["time"]
 					);	
 			}
 
@@ -93,7 +94,7 @@ class DbClass
 		echo json_encode($branch);
     } 
 	
-	    public function buildSimpleTree($i=1) 
+	public function buildSimpleTree($i=1) 
 	{   
 	    global $i;
         global $mass;
@@ -109,7 +110,9 @@ class DbClass
 		        $mass[$row["id"]] = array (
 				    "id"=>$row["id"],
 					"name"=>$row["name"],
-					"parent_id"=>$row["parent_id"]
+					"parent_id"=>$row["parent_id"],
+					"creation_time"=>$row["time"]
+					
 					);	
 			}
 
@@ -146,107 +149,56 @@ class DbClass
         $result = $this->conn->prepare($sql);
         $result->execute();
     } 
+	
+    public function showRespons($id) 
+	{   
+      	global $i;
+        global $resp;
+		global $row;	
+		
+
+        $sql="SELECT id,respons FROM spisok";
+		$result = $this->conn->prepare($sql);
+        $result->execute();		
+
+			while ($row = $result->fetch(PDO::FETCH_ASSOC)) {   
+		        $i++;
+				if ($row["id"]==$id) {
+				$resp = explode(", ", $row["respons"]);	
+				}
+			}
+        echo json_encode($resp);			
+	}
+	
+public function updateRespons($id, array $arr)
+    {
+        $zapis = implode(', ', $arr);
+        $sql = "Select respons FROM spisok WHERE id=".$id;
+        $result = $this->conn->prepare($sql);
+        $result->execute();
+        $row = $result->fetch(PDO::FETCH_ASSOC);
+
+        if (strcmp($row['respons'], $zapis)) {
+            $sql = "UPDATE spisok SET respons='".$zapis."' WHERE id=".$id;
+            $result = $this->conn->prepare($sql);
+            $result->execute();
+        } else {
+            echo json_encode ("Tyt toje samoe");
+        }			
+    }
 }
 
 $db = new DbClass(servername, username, pass, dbname, charset);
 //$db->select('*', 'spisok');
 //$db->selectMass();
 //$db->buildTree($mass);
-$db->buildSimpleTree();
+//$db->buildSimpleTree();
 //$db->delete(7);
 //$db->showTree(0,0);
 //$db->update('name', "'MSU'", 1);
 //$db->peremes(8, 13);
-
-/* $sql = "INSERT INTO spisok (name) VALUES ('OilAndGasUniversity');";
-$sql .= "INSERT INTO spisok (name) VALUES ('pro_Volkov');";
-$sql .= "INSERT INTO spisok (name) VALUES ('pro_Shilov');";
-$sql .= "INSERT INTO spisok (name) VALUES ('pro_Ustinov');";
-$sql .= "INSERT INTO spisok (name) VALUES ('pro_Sulko');";
-$sql .= "INSERT INTO spisok (name) VALUES ('fak_AiVT');";
-$sql .= "INSERT INTO spisok (name) VALUES ('fak_Yuridich');";
-$sql .= "INSERT INTO spisok (name) VALUES ('fak_Geologich');";
-$sql .= "INSERT INTO spisok (name) VALUES ('fak_Razrabotki');";
-$sql .= "INSERT INTO spisok (name) VALUES ('fak_Fiziki');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_Matematiki');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_Informatiki');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_Kibernetiki');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_Fiziki');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_Bureniya');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_Geologii');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_RusYaz');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_Prava');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_Economiki');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_Mehaniki');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_FizikiPolya');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_Himii');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_Termodinamili');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_Proectirovaniya');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_UgolnogoPrava');";
-$sql .= "INSERT INTO spisok (name) VALUES ('kaf_Istorii');";
-
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (1,2);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (1,3);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (1,4);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (1,5);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (2,10);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (4,6);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (4,7);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (4,8);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (5,9);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (6,11);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (6,12);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (6,13);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (7,17);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (7,18);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (7,25);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (7,26);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (8,15);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (8,16);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (9,22);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (9,24);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (7,19);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (10,14);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (10,20);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (10,21);";
-$sql .= "INSERT INTO ekviv (parent_id, child_id) VALUES (10,23)";
-
-if (mysqli_multi_query($conn,$sql)){
-    echo "insertion successfully";
-    } else {
-	    echo "Error" . mysqli_error($conn);
-    }  */
-
-/* $sql = "UPDATE spisok SET parent_id=1 WHERE id=2;";
-$sql .= "UPDATE spisok SET parent_id=1 WHERE id=3;";
-$sql .= "UPDATE spisok SET parent_id=1 WHERE id=4;";
-$sql .= "UPDATE spisok SET parent_id=1 WHERE id=5;";
-$sql .= "UPDATE spisok SET parent_id=2 WHERE id=10;";
-$sql .= "UPDATE spisok SET parent_id=4 WHERE id=6;";
-$sql .= "UPDATE spisok SET parent_id=4 WHERE id=7;";
-$sql .= "UPDATE spisok SET parent_id=4 WHERE id=8;";
-$sql .= "UPDATE spisok SET parent_id=5 WHERE id=9;";
-$sql .= "UPDATE spisok SET parent_id=6 WHERE id=11;";
-$sql .= "UPDATE spisok SET parent_id=6 WHERE id=12;";
-$sql .= "UPDATE spisok SET parent_id=6 WHERE id=13;";
-$sql .= "UPDATE spisok SET parent_id=7 WHERE id=17;";
-$sql .= "UPDATE spisok SET parent_id=7 WHERE id=18;";
-$sql .= "UPDATE spisok SET parent_id=7 WHERE id=25;";
-$sql .= "UPDATE spisok SET parent_id=7 WHERE id=26;";
-$sql .= "UPDATE spisok SET parent_id=8 WHERE id=15;";
-$sql .= "UPDATE spisok SET parent_id=8 WHERE id=16;";
-$sql .= "UPDATE spisok SET parent_id=9 WHERE id=22;";
-$sql .= "UPDATE spisok SET parent_id=9 WHERE id=24;";
-$sql .= "UPDATE spisok SET parent_id=7 WHERE id=19;";
-$sql .= "UPDATE spisok SET parent_id=10 WHERE id=14;";
-$sql .= "UPDATE spisok SET parent_id=10 WHERE id=20;";
-$sql .= "UPDATE spisok SET parent_id=10 WHERE id=21;";
-$sql .= "UPDATE spisok SET parent_id=10 WHERE id=23;";
-
-if (mysqli_multi_query($conn,$sql)){
-    echo "Modify successfully";
-    } else {
-        echo "Error" . mysqli_error($conn);
-    } */
+$db->showRespons(6);//выводит ответственных по id (ответственные записаны у факультетов (id=6-10))
+//$arr = array('Govorov','Blinov');//массив ответственных на ввод
+//$db->updateRespons(6, $arr);
 
 ?>
