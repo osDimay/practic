@@ -17,49 +17,47 @@ class DbClass
         $this->username = $username;
         $this->pass = $pass;
         $this->dbname = $dbname;
-		$this->charset = $charset;		
+        $this->charset = $charset;		
         $this->openConnection(); 
     } 
  
     public function openConnection() 
-	{ 
+    { 
         if(!$this->db_ne_conn) {
-		    $this->conn = new PDO(
-			    "mysql:host=$this->servername; 
-			    dbname=$this->dbname;
-				charset=$this->charset", 
-				$this->username, 
-				$this->pass
-				);
-	    }
-	} 
+        $this->conn = new PDO(
+                "mysql:host=$this->servername; 
+                dbname=$this->dbname;
+                charset=$this->charset", 
+                $this->username, 
+                $this->pass
+                );
+        }
+    } 
  
     public function selectMass($i=1) 
-	{   
-	    global $i;
+    {   
+        global $i;
         global $mass;
-		global $row;	
+        global $row;	
 		
-
         $sql="SELECT * FROM spisok";
         $result = $this->conn->prepare($sql);
         $result->execute();		
 
-			while ($row = $result->fetch(PDO::FETCH_ASSOC)) {   
-		        $i++;
-		        $mass[$row["id"]] = array (
-				    "id"=>$row["id"],
-					"name"=>$row["name"],
-					"parent_id"=>$row["parent_id"],
-					"creation_time"=>$row["time"]
-					);	
-			}
-
+            while ($row = $result->fetch(PDO::FETCH_ASSOC)) {   
+                $i++;
+                $mass[$row["id"]] = array (
+                    "id"=>$row["id"],
+                    "name"=>$row["name"],
+                    "parent_id"=>$row["parent_id"],
+                    "creation_time"=>$row["time"]
+                    );	
+            }
         return $mass;
-	}
+    }
 	
-	public function buildTree(array $mass, int $start_id = 0)
-	{        
+    public function buildTree(array $mass, int $start_id = 0)
+    {        
         $rootId = 0;
   
         foreach ($mass as $id => $node) {
@@ -70,48 +68,45 @@ class DbClass
             }
         }		
 		
-		if ($start_id) {
-		$rootId = $start_id;
-		}
+        if ($start_id) {
+            $rootId = $start_id;
+        }
 		
-		$branch = array($rootId => $mass[$rootId]);
-		echo json_encode($branch);
+        $branch = array($rootId => $mass[$rootId]);
+        echo json_encode($branch);
     } 
 	
-	public function buildSimpleTree($i=1) 
-	{   
-	    global $i;
+    public function buildSimpleTree($i=1) 
+    {   
+        global $i;
         global $mass;
-		global $row;	
+        global $row;	
 		
-
         $sql="SELECT * FROM spisok";
-		$result = $this->conn->prepare($sql);
+        $result = $this->conn->prepare($sql);
         $result->execute();		
 
-			while ($row = $result->fetch(PDO::FETCH_ASSOC)) {   
-		        $i++;
-		        $mass[$row["id"]] = array (
-				    "id"=>$row["id"],
-					"name"=>$row["name"],
-					"parent_id"=>$row["parent_id"],
-					"creation_time"=>$row["time"]
-					
-					);	
-			}
-
+            while ($row = $result->fetch(PDO::FETCH_ASSOC)) {   
+                $i++;
+                $mass[$row["id"]] = array (
+                    "id"=>$row["id"],
+                    "name"=>$row["name"],
+                    "parent_id"=>$row["parent_id"],
+                    "creation_time"=>$row["time"]
+                    );	
+            }
         echo json_encode($mass);
-	}
+    }
  
     public function delete($parent_id) 
     {
-		$sql="DELETE FROM spisok WHERE id='".$parent_id."' LIMIT 1";
-		$result = $this->conn->prepare($sql);
+        $sql="DELETE FROM spisok WHERE id='".$parent_id."' LIMIT 1";
+        $result = $this->conn->prepare($sql);
         $result->execute();
 		
         if (isset($parent_id)) {
             $sql="SELECT * FROM spisok WHERE parent_id='".$parent_id."'";
-			$result = $conn->prepare($sql);
+            $result = $conn->prepare($sql);
             $result->execute();
             while ($row=$result->fetch(PDO::FETCH_ASSOC)) {
                 $this->delete($row['id']);
@@ -135,26 +130,25 @@ class DbClass
     } 
 	
     public function showRespons($id) 
-	{   
-      	global $i;
+    {   
+        global $i;
         global $resp;
-		global $row;	
+        global $row;	
 		
-
         $sql="SELECT id,respons FROM spisok";
-		$result = $this->conn->prepare($sql);
+        $result = $this->conn->prepare($sql);
         $result->execute();		
 
-			while ($row = $result->fetch(PDO::FETCH_ASSOC)) {   
-		        $i++;
-				if ($row["id"]==$id) {
-				$resp = explode(", ", $row["respons"]);	
-				}
-			}
+            while ($row = $result->fetch(PDO::FETCH_ASSOC)) {   
+                $i++;
+                if ($row["id"]==$id) {
+                $resp = explode(", ", $row["respons"]);	
+                }
+            }
         echo json_encode($resp);			
-	}
+    }
 	
-public function updateRespons($id, array $arr)
+    public function updateRespons($id, array $arr)
     {
         $zapis = implode(', ', $arr);
         $sql = "Select respons FROM spisok WHERE id=".$id;
