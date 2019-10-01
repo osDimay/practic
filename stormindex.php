@@ -1,23 +1,17 @@
 <?php
 
-define('servername','localhost');
-define('username','root');
-define('pass','');
-define('dbname','mydb');
-define('charset','UTF8');
-
 class DbClass
 {
     private $servername, $username, $pass, $dbname, $charset, $db_ne_conn;
     private $conn = 0;
 
-    function __construct($servername, $username, $pass, $dbname, $charset)
+    function __construct()
     {
-        $this->servername = $servername;
-        $this->username = $username;
-        $this->pass = $pass;
-        $this->dbname = $dbname;
-        $this->charset = $charset;
+        $this->servername = 'localhost';
+        $this->username = 'root';
+        $this->pass = '';
+        $this->dbname = 'mydb';
+        $this->charset = 'UTF8';
         $this->openConnection();
     }
 
@@ -167,17 +161,15 @@ class DbClass
     }
 }
 
-$db = new DbClass(servername, username, pass, dbname, charset);
 //$db->select('*', 'spisok');
-//$db->selectMass();
-//$db->buildTree($mass);
-//$db->buildSimpleTree();
-//$db->delete(7);
-//$db->showTree(0,0);
-//$db->update('name', "'MSU'", 1);
-//$db->peremes(8, 13);
+//$db->selectMass();//формирует массив из данных таблицы
+//$db->buildTree($mass);//строит объёмное дерево на основе массива из selectMass
+//$db->buildSimpleTree();//строит плоское дерево
+//$db->delete(7);//удаляет запись таблицы по id
+//$db->update('name', "'MSU'", 1);//обновляет данные таблицы по изменяемому полю, новому значению и id
+//$db->peremes(8, 13);//меняет parent_id (меняет родительский элемент ветки), получая на вход новый и старый parent_id соответственно
 //$db->showRespons(6);//выводит ответственных по id (ответственные записаны у факультетов (id=6-10))
 //$arr = array('Govorov','Blinov');//массив ответственных на ввод
-//$db->updateRespons(6, $arr);
+//$db->updateRespons(6, $arr);//меняет ответственных, получая на вход id и массив с новым списком ответственных
 
 ?>
