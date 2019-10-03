@@ -30,10 +30,6 @@ class DbClass
 
     public function selectMass($i=1)
     {
-        global $i;
-        global $mass;
-        global $row;
-
         $sql="SELECT * FROM spisok";
         $result = $this->conn->prepare($sql);
         $result->execute();
@@ -44,17 +40,16 @@ class DbClass
                 "id"=>$row["id"],
                 "name"=>$row["name"],
                 "parent_id"=>$row["parent_id"],
-                "creation_time"=>$row["time"],
-                "otvetstvennye"=>$row["respons"]
+                "creation_time"=>$row["time"]
             );
         }
         return $mass;
     }
 
-    public function buildTree(array $mass, int $start_id = 0)
+    public function buildTree($start_id = 0)
     {
         $rootId = 0;
-
+        $mass = $this->selectMass();
         foreach ($mass as $id => $node) {
             if ($node['parent_id']) {
                 $mass[$node['parent_id']]['sub'][] =&$mass[$id];
@@ -73,10 +68,7 @@ class DbClass
 
     public function buildSimpleTree($i=1)
     {
-        global $i;
-        global $mass;
-        global $row;
-
+        $this->selectMass();
         $sql="SELECT * FROM spisok";
         $result = $this->conn->prepare($sql);
         $result->execute();
@@ -101,7 +93,7 @@ class DbClass
 
         if (isset($parent_id)) {
             $sql="SELECT * FROM spisok WHERE parent_id='".$parent_id."'";
-            $result = $conn->prepare($sql);
+            $result = $this->conn->prepare($sql);
             $result->execute();
             while ($row=$result->fetch(PDO::FETCH_ASSOC)) {
                 $this->delete($row['id']);
@@ -126,50 +118,45 @@ class DbClass
 
     public function showRespons($id)
     {
-        global $i;
-        global $resp;
-        global $row;
-
-        $sql="SELECT id,respons FROM spisok";
+        $mass = array();
+        $sql="SELECT * FROM otv WHERE otv.podr_id =".$id;
         $result = $this->conn->prepare($sql);
         $result->execute();
 
         while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-            $i++;
-            if ($row["id"]==$id) {
-                $resp = explode(", ", $row["respons"]);
-            }
+            $mass[] = $row["otv_name"];
         }
-        echo json_encode($resp);
+        return ($mass);
     }
 
-    public function updateRespons($id, array $arr)
+    public function updateRespons($podr_id, array $arr)
     {
-        $zapis = implode(', ', $arr);
-        $sql = "Select respons FROM spisok WHERE id=".$id;
+        $sql = "DELETE FROM otv WHERE podr_id=".$podr_id;
         $result = $this->conn->prepare($sql);
         $result->execute();
-        $row = $result->fetch(PDO::FETCH_ASSOC);
 
-        if (strcmp($row['respons'], $zapis)) {
-            $sql = "UPDATE spisok SET respons='".$zapis."' WHERE id=".$id;
+        foreach($arr as $name) {
+            $sql = "INSERT INTO otv (podr_id, otv_name) VALUES ($podr_id, '$name')";
             $result = $this->conn->prepare($sql);
             $result->execute();
-        } else {
-            echo json_encode ("Tyt toje samoe");
         }
     }
 }
 
+//$db = new DbClass();
 //$db->select('*', 'spisok');
-//$db->selectMass();//формирует массив из данных таблицы
-//$db->buildTree($mass);//строит объёмное дерево на основе массива из selectMass
+//$db->buildTree();//строит объёмное дерево на основе массива из selectMass
 //$db->buildSimpleTree();//строит плоское дерево
-//$db->delete(7);//удаляет запись таблицы по id
+//$db->delete(19);//удаляет запись таблицы по id
 //$db->update('name', "'MSU'", 1);//обновляет данные таблицы по изменяемому полю, новому значению и id
 //$db->peremes(8, 13);//меняет parent_id (меняет родительский элемент ветки), получая на вход новый и старый parent_id соответственно
-//$db->showRespons(6);//выводит ответственных по id (ответственные записаны у факультетов (id=6-10))
-//$arr = array('Govorov','Blinov');//массив ответственных на ввод
-//$db->updateRespons(6, $arr);//меняет ответственных, получая на вход id и массив с новым списком ответственных
+//$mass = $db->showRespons(9);//выводит ответственных по id (ответственные записаны у факультетов (id=6-10))
+//echo json_encode($mass);
+//$arr = array('Shinkin','Blinov');//массив ответственных на ввод
+//$db->updateRespons(19, $arr);//меняет ответственных, получая на вход id и массив с новым списком ответственных
 
-?>
+/*$sql = "CREATE TABLE otv (
+podr_id INTEGER (255) NOT NULL,
+otv_name VARCHAR (255) NOT NULL,
+FOREIGN KEY (podr_id) REFERENCES spisok(id) ON DELETE CASCADE ON UPDATE CASCADE
+)";*/

@@ -1,40 +1,25 @@
 <?php
 require_once ("stormindex.php");
-?>
 
-<html>
-
-<head>
-</head>
-
-<body>
-    <table id="example" class="display" cellspacing="0" width="100%" border="1px solid black">
-        <thead>
-        <tr>
-            <th>id</th>
-            <th>name</th>
-            <th>parent id</th>
-            <th>creation time</th>
-            <th>otvetstvennye</th>
-        </tr>
-        </thead>
-
-        <tbody>
-            <?php
+echo "<html><head></head><body>";
+    echo "<table id = example class=display cellspacing= 0 width= 100% border=1px solid black>";
+        echo "<thead>";
+        echo "<tr>";
+            echo "<th>id</th>";
+            echo "<th>name</th>";
+            echo "<th>parent id</th>";
+            echo "<th>creation time</th>";
+        echo "</tr>";
+        echo "</thead>";
+        echo "<tbody>";
             $db = new DbClass();
-            $db->selectMass();
-            foreach ($mass as $row):;
-            ?>
-                <tr>
-                    <td><?php echo $row["id"];?></td>
-                    <td><?php echo $row["name"];?></td>
-                    <td><?php echo $row["parent_id"];?></td>
-                    <td><?php echo $row["creation_time"];?></td>
-                    <td><?php echo $row["otvetstvennye"];?></td>
-                </tr>
-            <?php endforeach;?>
-        </tbody>
-    </table>
-</body>
-
-</html>
+            $mass = $db->selectMass();
+            foreach ($mass as $row) {
+            echo "<tr>";
+                    echo"<td>"; echo $row["id"]; echo "</td>";
+                    echo"<td>"; echo $row["name"]; echo "</td>";
+                    echo"<td>"; echo $row["parent_id"]; echo "</td>";
+                    echo"<td>"; echo $row["creation_time"]; echo "</td>";
+            echo "</tr>";
+            }
+echo "</tbody></table></body></html>";

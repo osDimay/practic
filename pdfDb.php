@@ -16,9 +16,9 @@ $pdf->SetFont( 'Times', 'B', 12 );
 //$pdf->Cell( 0, 15, $reportName, 0, 0, 'C' );
 
 $db = new DbClass();
-$header = array("id", "name", "parent id", "TIMEDATE","otvetstvennye");
-$db->selectMass();
-$w=array(7,40,20,45,80);
+$header = array("id", "name", "parent id", "TIMEDATE");
+$mass = $db->selectMass();
+$w = array(7,40,20,45);
 
     for($i=0; $i<count($header); $i++) {
         $pdf->Cell($w[$i], 10, $header[$i], 1, 0, 'C');
@@ -36,4 +36,3 @@ $w=array(7,40,20,45,80);
 
 $pdf->Output( "report.pdf", "I" );
 
-?>
