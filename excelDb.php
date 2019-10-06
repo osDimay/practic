@@ -5,20 +5,20 @@ require __DIR__ . '/vendor/autoload.php';
 
 $excel = new PHPExcel();
 $excel->setActiveSheetIndex(0);
-$asheet = $excel->getActiveSheet();
+$activeSheet = $excel->getActiveSheet();
 
-$asheet->getColumnDimension('A')->setWidth(7);
-$asheet->getColumnDimension('B')->setWidth(20);
-$asheet->getColumnDimension('C')->setWidth(10);
-$asheet->getColumnDimension('D')->setWidth(20);
+$activeSheet->getColumnDimension('A')->setWidth(7);
+$activeSheet->getColumnDimension('B')->setWidth(20);
+$activeSheet->getColumnDimension('C')->setWidth(10);
+$activeSheet->getColumnDimension('D')->setWidth(20);
 
-$v = array("id", "name", "parent_id", "DATETIME");
-$n = array("A1", "B1", "C1", "D1");
-$asheet->getRowDimension('1')->setRowHeight(20);
-$i=0;
-    while ($i <= 3) {
-        $asheet->setCellValue($n[$i], $v[$i]);
-        $i++;
+$headerNames = array("id", "name", "parent_id", "DATETIME");
+$headerCells = array("A1", "B1", "C1", "D1");
+$activeSheet->getRowDimension('1')->setRowHeight(20);
+$cellNumber=0;
+    while ($cellNumber <= 3) {//формирование шапки
+        $activeSheet->setCellValue($headerCells[$cellNumber], $headerNames[$cellNumber]);
+        $cellNumber++;
     }
 
 $style_wrap = array(
@@ -38,20 +38,18 @@ $style_wrap = array(
     )
 );
 
-
-
-$db = new DbClass();
-$mass = $db->selectMass();
-$i=2;
+$db = new stormproject\DbClass();
+$mass = $db->extractDataFromDb();
+$rowNumber=2;//первый ряд занят шапкой
     foreach ($mass as $row) {
-        $asheet->setCellValue('A'.($i), $row['id']);
-        $asheet->setCellValue('B'.($i), $row['name']);
-        $asheet->setCellValue('C'.($i), $row['parent_id']);
-        $asheet->setCellValue('D'.($i), $row['creation_time']);
-        $i++;
+        $activeSheet->setCellValue('A'.($rowNumber), $row['id']);
+        $activeSheet->setCellValue('B'.($rowNumber), $row['name']);
+        $activeSheet->setCellValue('C'.($rowNumber), $row['parent_id']);
+        $activeSheet->setCellValue('D'.($rowNumber), $row['creation_time']);
+        $rowNumber++;
     }
 
-$asheet->getStyle('A1:D'.($i-1))->applyFromArray($style_wrap);
+$activeSheet->getStyle('A1:D'.($rowNumber-1))->applyFromArray($style_wrap);
 
 header('Content-Type:xlsx:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 header('Content-Disposition:attachment;filename="simple.xlsx"');
@@ -59,5 +57,3 @@ $objWriter = new PHPExcel_Writer_Excel2007($excel);
 $objWriter->save('php://output');
 
 exit();
-
-?>

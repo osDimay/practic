@@ -12,8 +12,8 @@ echo "<html><head></head><body>";
         echo "</tr>";
         echo "</thead>";
         echo "<tbody>";
-            $db = new DbClass();
-            $mass = $db->selectMass();
+            $db = new stormproject\DbClass();
+            $mass = $db->extractDataFromDb();
             foreach ($mass as $row) {
             echo "<tr>";
                     echo"<td>"; echo $row["id"]; echo "</td>";

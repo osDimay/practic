@@ -12,25 +12,22 @@ $pdf->SetTextColor( $textColour[0], $textColour[1], $textColour[2] );
 $pdf->AddPage();
 $pdf->SetFont( 'Times', 'B', 12 );
 
-//$pdf->Ln( $reportNameYPos );
-//$pdf->Cell( 0, 15, $reportName, 0, 0, 'C' );
-
-$db = new DbClass();
+$db = new stormproject\DbClass();
 $header = array("id", "name", "parent id", "TIMEDATE");
-$mass = $db->selectMass();
-$w = array(7,40,20,45);
+$mass = $db->extractDataFromDb();
+$columnWidth = array(7,40,20,45);//ширина колонок в таблице
 
-    for($i=0; $i<count($header); $i++) {
-        $pdf->Cell($w[$i], 10, $header[$i], 1, 0, 'C');
+    for($columnNumber=0; $columnNumber<count($header); $columnNumber++) {//формирование и заполнение шапки
+        $pdf->Cell($columnWidth[$columnNumber], 10, $header[$columnNumber], 1, 0, 'C');
     }
 
-    foreach ($mass as $row) {
+    foreach ($mass as $row) {//формирование и заполнение таблицы
         $pdf->SetFont('Times', '', 12);
         $pdf->Ln();
-        $i = 0;
+        $columnNumber = 0;
         foreach ($row as $column) {
-            $pdf->Cell($w[$i], 12, $column, 1);
-            $i++;
+            $pdf->Cell($columnWidth[$columnNumber], 12, $column, 1);
+            $columnNumber++;
         }
     }
 
