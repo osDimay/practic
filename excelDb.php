@@ -16,10 +16,11 @@ $headerNames = array("id", "name", "parent_id", "DATETIME");
 $headerCells = array("A1", "B1", "C1", "D1");
 $activeSheet->getRowDimension('1')->setRowHeight(20);
 $cellNumber=0;
-    while ($cellNumber <= 3) {//формирование шапки
-        $activeSheet->setCellValue($headerCells[$cellNumber], $headerNames[$cellNumber]);
-        $cellNumber++;
-    }
+
+while ($cellNumber <= 3) {//формирование шапки
+    $activeSheet->setCellValue($headerCells[$cellNumber], $headerNames[$cellNumber]);
+    $cellNumber++;
+}
 
 $style_wrap = array(
     'borders'=>array(
@@ -41,13 +42,14 @@ $style_wrap = array(
 $db = new stormproject\DbClass();
 $mass = $db->extractDataFromDb();
 $rowNumber=2;//первый ряд занят шапкой
-    foreach ($mass as $row) {
-        $activeSheet->setCellValue('A'.($rowNumber), $row['id']);
-        $activeSheet->setCellValue('B'.($rowNumber), $row['name']);
-        $activeSheet->setCellValue('C'.($rowNumber), $row['parent_id']);
-        $activeSheet->setCellValue('D'.($rowNumber), $row['creation_time']);
-        $rowNumber++;
-    }
+
+foreach ($mass as $row) {
+    $activeSheet->setCellValue('A'.($rowNumber), $row['id']);
+    $activeSheet->setCellValue('B'.($rowNumber), $row['name']);
+    $activeSheet->setCellValue('C'.($rowNumber), $row['parent_id']);
+    $activeSheet->setCellValue('D'.($rowNumber), $row['creation_time']);
+    $rowNumber++;
+}
 
 $activeSheet->getStyle('A1:D'.($rowNumber-1))->applyFromArray($style_wrap);
 
