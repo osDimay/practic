@@ -25,11 +25,11 @@ class DbClass
     public function openConnection()//создаёт соединение с БД
     {
         $this->connection= new PDO(
-    "mysql:host=$this->servername; 
+            "mysql:host=$this->servername; 
         dbname=$this->dbname;
         charset=$this->charset",
-        $this->username,
-        $this->pass
+            $this->username,
+            $this->pass
         );
     }
 
@@ -94,6 +94,41 @@ class DbClass
         return true;
     }
 
+    public function deleteFreeResponsibles()//удаляет непривязанных ответственных
+    {
+        $sql="SELECT responsibleID FROM responsibles";
+        $result = $this->connection->prepare($sql);
+        $result->execute();
+        $responsibles = array();
+        while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+            $responsibles[] = $row['responsibleID'];
+        }
+
+        $sql="SELECT responsibleID FROM university_responsibles";
+        $result = $this->connection->prepare($sql);
+        $result->execute();
+        $usedResponsibles = array();
+        while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+            $usedResponsibles[] = $row['responsibleID'];
+        }
+
+        $del = array_diff($responsibles, $usedResponsibles);
+
+        $this->connection->beginTransaction();
+        try {
+            foreach ($del as $outDatedId) {//удаляет непривязанных ответственных из таблицы
+                $sql = "DELETE FROM responsibles WHERE responsibleID = $outDatedId";
+                $result = $this->connection->prepare($sql);
+                $result->execute();
+            }
+            $this->connection->commit();
+        } catch (Exeption $error) {
+            $this->connection->rollBack();
+            echo "Error: ".$error->getMessage();
+        }
+
+    }
+
     public function deleteBranch ($parentId)//удаляет узел по id со всеми потомками
     {
         $this->connection->beginTransaction();
@@ -104,6 +139,7 @@ class DbClass
             $this->connection->rollBack();
             echo "Error: ".$error->getMessage();
         }
+        $this->deleteFreeResponsibles();
     }
 
     public function updateUnitData($columnName, $newValue, $unitId)//обновляет данные таблицы по изменяемому полю, новому значению и id узла
@@ -137,7 +173,8 @@ class DbClass
 
     public function showResponsiblesForUnit($unitId)//выводит ответственных по id узла
     {
-        $sql="SELECT * FROM responsibles WHERE responsibles.unitID =".$unitId;
+        $sql=$sql="SELECT * FROM university_responsibles 
+        JOIN responsibles USING (responsibleID) WHERE university_responsibles.unitID=".$unitId;
         $result = $this->connection->prepare($sql);
         $result->execute();
 
@@ -150,7 +187,8 @@ class DbClass
 
     public function updateResponsiblesForUnit($unitId, array $newResponsibles)//меняет ответственных, получая на вход id и массив с новым списком ответственных
     {
-        $sql = "SELECT responsibleName FROM responsibles WHERE unitID=". $unitId;
+        $sql="SELECT * FROM university_responsibles 
+        JOIN responsibles USING (responsibleID) WHERE university_responsibles.unitID=".$unitId;
         $result = $this->connection->prepare($sql);
         $result->execute();
 
@@ -166,7 +204,7 @@ class DbClass
         $this->connection->beginTransaction();
         try {
             foreach ($del as $outDatedName) {//удаляет устаревших ответственных из таблицы
-                $sql = "DELETE FROM responsibles WHERE unitID=".$unitId." AND responsibleName = '$outDatedName'";
+                $sql = "DELETE FROM responsibles WHERE responsibleName = '$outDatedName'";
                 $result = $this->connection->prepare($sql);
                 $result->execute();
             }
@@ -176,10 +214,15 @@ class DbClass
             echo "Error: ".$error->getMessage();
         }
 
+        $newResponsibleID = array();
         $this->connection->beginTransaction();
         try {
             foreach ($insertion as $newName) {//записывает новых ответственных в таблицу
-                $sql = "INSERT INTO responsibles (unitID, responsibleName) VALUES ($unitId, '$newName')";
+                $sql = "INSERT INTO responsibles (responsibleName) VALUES ('$newName')";
+                $result = $this->connection->prepare($sql);
+                $result->execute();
+                $newId = $this->connection->lastInsertId();
+                $sql = "INSERT INTO university_responsibles (unitID, responsibleID) VALUES ($unitId, $newId)";
                 $result = $this->connection->prepare($sql);
                 $result->execute();
             }
