@@ -3,6 +3,7 @@
 require_once ("stormindex.php");
 require __DIR__ . '/vendor/autoload.php';
 
+const COLUMNNUMBER = 3;
 $excel = new PHPExcel();
 $excel->setActiveSheetIndex(0);
 $activeSheet = $excel->getActiveSheet();
@@ -17,7 +18,7 @@ $headerCells = array("A1", "B1", "C1", "D1");
 $activeSheet->getRowDimension('1')->setRowHeight(20);
 $cellNumber=0;
 
-while ($cellNumber <= 3) {//формирование шапки
+while ($cellNumber <= COLUMNNUMBER) {//формирование шапки
     $activeSheet->setCellValue($headerCells[$cellNumber], $headerNames[$cellNumber]);
     $cellNumber++;
 }

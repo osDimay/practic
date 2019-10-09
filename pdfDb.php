@@ -12,6 +12,9 @@ $pdf->SetTextColor( $textColour[0], $textColour[1], $textColour[2] );
 $pdf->AddPage();
 $pdf->SetFont( 'Times', 'B', 12 );
 
+//$pdf->Ln( $reportNameYPos );
+//$pdf->Cell( 0, 15, $reportName, 0, 0, 'C' );
+
 $db = new stormproject\DbClass();
 $header = array("id", "name", "parent id", "TIMEDATE");
 $mass = $db->extractDataFromDb();

@@ -22,25 +22,29 @@ class DbClass
         $this->openConnection();
     }
 
-    public function openConnection()//создаёт соединение с БД
+    /*создаёт соединение с БД*/
+    public function openConnection()
     {
         $this->connection= new PDO(
-            "mysql:host=$this->servername; 
+    "mysql:host=$this->servername; 
         dbname=$this->dbname;
         charset=$this->charset",
-            $this->username,
-            $this->pass
+        $this->username,
+        $this->pass
         );
     }
 
-    public function extractDataFromDb()//формирует массив из данных таблицы
+    /*формирует массив из данных таблицы*/
+    public function extractDataFromDb()
     {
         $sql="SELECT * FROM university";
         $result = $this->connection->prepare($sql);
         $result->execute();
 
-        $mass = array();//массив с данными из таблицы university
-        while ($row = $result->fetch(PDO::FETCH_ASSOC)) {// заполняет массив данными
+        /*$mass - массив с данными из таблицы university (пока пустой)*/
+        $mass = array();
+        /*заполняем массив данными*/
+        while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
             $mass[$row["id"]] = array (
                 "id"=>$row["id"],
                 "name"=>$row["name"],
@@ -51,19 +55,23 @@ class DbClass
         return $mass;
     }
 
-    public function builtHierarchyTree($startUnitId = 0)//строит объёмное дерево
+    /*строит объёмное дерево*/
+    public function builtHierarchyTree($startUnitId = 0)
     {
         $rootUnitId = 0;
-        $mass = $this->extractDataFromDb();//массив с данными из таблицы university
+        /*$mass - массив с данными из таблицы university*/
+        $mass = $this->extractDataFromDb();
         foreach ($mass as $id => $node) {
             if ($node['parent_id']) {
                 $mass[$node['parent_id']] =&$mass[$id];
             } else {
-                $rootUnitId = $id;//если отсутствует parent_id, то запоминаем id, как id корневого узла
+                /*если отсутствует parent_id, то запоминаем id, как id корневого узла*/
+                $rootUnitId = $id;
             }
         }
 
-        if ($startUnitId) {//если получен параметр startUnitId, то записываем его, как новый id корневого узла
+        /*если получен параметр startUnitId, то записываем его, как новый id корневого узла*/
+        if ($startUnitId) {
             $rootUnitId = $startUnitId;
         }
 
@@ -71,13 +79,15 @@ class DbClass
         echo json_encode($branch);
     }
 
-    public function buildFlatTree()//строит плоское дерево
+    /*строит плоское дерево*/
+    public function buildFlatTree()
     {
         $dataMass = $this->extractDataFromDb();
         echo json_encode($dataMass);
     }
 
-    public function deleteBranchRecursive($parentId)//рекурсивная функция удаления узла по id со всеми потомками
+    /*рекурсивная функция удаления узла по id со всеми потомками*/
+    private function deleteBranchRecursive($parentId)
     {
         $sql="DELETE FROM university WHERE id='".$parentId."' LIMIT 1";
         $result = $this->connection->prepare($sql);
@@ -94,7 +104,8 @@ class DbClass
         return true;
     }
 
-    public function deleteFreeResponsibles()//удаляет непривязанных ответственных
+    /*удаляет непривязанных ответственных*/
+    private function deleteFreeResponsibles()
     {
         $sql="SELECT responsibleID FROM responsibles";
         $result = $this->connection->prepare($sql);
@@ -116,7 +127,8 @@ class DbClass
 
         $this->connection->beginTransaction();
         try {
-            foreach ($del as $outDatedId) {//удаляет непривязанных ответственных из таблицы
+            /*удаляет непривязанных ответственных из таблицы*/
+            foreach ($del as $outDatedId) {
                 $sql = "DELETE FROM responsibles WHERE responsibleID = $outDatedId";
                 $result = $this->connection->prepare($sql);
                 $result->execute();
@@ -129,11 +141,13 @@ class DbClass
 
     }
 
-    public function deleteBranch ($parentId)//удаляет узел по id со всеми потомками
+    /*удаляет узел по id со всеми потомками*/
+    public function deleteBranch ($parentId)
     {
         $this->connection->beginTransaction();
         try {
-            $this->deleteBranchRecursive($parentId);//вызов рекурсивной функции удаления узла по id со всеми потомками
+            /*вызов рекурсивной функции удаления узла по id со всеми потомками*/
+            $this->deleteBranchRecursive($parentId);
             $this->connection->commit();
         } catch (Exeption $error) {
             $this->connection->rollBack();
@@ -142,7 +156,8 @@ class DbClass
         $this->deleteFreeResponsibles();
     }
 
-    public function updateUnitData($columnName, $newValue, $unitId)//обновляет данные таблицы по изменяемому полю, новому значению и id узла
+    /*обновляет данные таблицы по изменяемому полю, новому значению и id узла*/
+    public function updateUnitData($columnName, $newValue, $unitId)
     {
         $this->connection->beginTransaction();
         try {
@@ -157,7 +172,9 @@ class DbClass
 
     }
 
-    public function changeParent($newParentId, $oldParentId, $columnName='parent_id')//меняет parent_id (меняет родительский элемент ветки), получая на вход новый и старый parent_id соответственно
+    /*меняет parent_id (меняет родительский элемент ветки),
+    получая на вход новый и старый parent_id соответственно*/
+    public function changeParent($newParentId, $oldParentId, $columnName='parent_id')
     {
         $this->connection->beginTransaction();
         try {
@@ -171,9 +188,10 @@ class DbClass
         }
     }
 
-    public function showResponsiblesForUnit($unitId)//выводит ответственных по id узла
+    /*выводит ответственных по id узла*/
+    public function showResponsiblesForUnit($unitId)
     {
-        $sql=$sql="SELECT * FROM university_responsibles 
+        $sql="SELECT * FROM university_responsibles 
         JOIN responsibles USING (responsibleID) WHERE university_responsibles.unitID=".$unitId;
         $result = $this->connection->prepare($sql);
         $result->execute();
@@ -185,51 +203,76 @@ class DbClass
         echo json_encode($mass);
     }
 
-    public function updateResponsiblesForUnit($unitId, array $newResponsibles)//меняет ответственных, получая на вход id и массив с новым списком ответственных
+    /*меняет ответственных, получая на вход id и массив с новым списком ответственных*/
+    public function updateResponsiblesForUnit($unitId, array $newResponsibles)
     {
         $sql="SELECT * FROM university_responsibles 
         JOIN responsibles USING (responsibleID) WHERE university_responsibles.unitID=".$unitId;
         $result = $this->connection->prepare($sql);
         $result->execute();
 
+        /*
+        $responsibles - массив массивов данных об ответственных (id => имя)
+        $responsibleNamess - массив имён ответственных, уже занесённых в БД
+        $responsibleIDss - массив id ответственных, уже занесённых в БД
+        */
         $responsibles = array();
+        $responsibleNamess = array();
+        $responsibleIDss = array();
         while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-            $responsibles[] = $row['responsibleName'];
+            $responsibles[] = array(
+                "responsibleID" => $row["responsibleID"],
+                "responsibleName" => $row["responsibleName"]
+            );
+            $responsibleNamess[] = $row["responsibleName"];
+            $responsibleIDss[] = $row["responsibleID"];
         }
 
-        $insertion = array_diff($newResponsibles, $responsibles);//массив новых ответственных на запись (исключаем тех, которые уже есть в таблице)
-        $equal = array_intersect($responsibles, $newResponsibles);
-        $del = array_diff($responsibles, $equal);//массив устаревших ответственных из таблицы на удаление (те, которых нет в новом списке)
+        /*
+        $insertion - массив новых ответственных на запись (исключаем тех, которые уже есть в таблице)
+        $equal - массив совпадающих имён в старом и новом массивах ответственных
+        $equalID - массив совпадающих id в старом и новом массивах ответственных
+        */
+        $insertion = array_diff($newResponsibles, $responsibleNamess);
+        $equal = array_intersect($responsibleNamess, $newResponsibles);
+        $equalID = array();
+        $countResponsibles = count($responsibles);
+        $countEqual = count($equal);
+        for ($i = 0; $i < $countResponsibles; $i++) {
+            for ($c = 0; $c < $countEqual; $c++) {
+                if (!strcasecmp($responsibles[$i]["responsibleName"], $equal[$c])) {
+                    $equalID[] = $responsibles[$i]["responsibleID"];
+                }
+            }
+        }
+        /*$del - массив устаревших id ответственных из таблицы на удаление (те, которых нет в новом списке)*/
+        $del = array_diff($responsibleIDss, $equalID);
 
         $this->connection->beginTransaction();
         try {
-            foreach ($del as $outDatedName) {//удаляет устаревших ответственных из таблицы
-                $sql = "DELETE FROM responsibles WHERE responsibleName = '$outDatedName'";
+            /*удаляет устаревших ответственных из таблицы*/
+            foreach ($del as $outDatedID) {
+                $sql = "DELETE FROM responsibles WHERE responsibleID = '$outDatedID'";
                 $result = $this->connection->prepare($sql);
                 $result->execute();
             }
-            $this->connection->commit();
-        } catch (Exeption $error) {
-            $this->connection->rollBack();
-            echo "Error: ".$error->getMessage();
-        }
 
         $newResponsibleID = array();
-        $this->connection->beginTransaction();
-        try {
-            foreach ($insertion as $newName) {//записывает новых ответственных в таблицу
+            /*записывает новых ответственных в таблицу*/
+            foreach ($insertion as $newName) {
                 $sql = "INSERT INTO responsibles (responsibleName) VALUES ('$newName')";
                 $result = $this->connection->prepare($sql);
                 $result->execute();
                 $newId = $this->connection->lastInsertId();
+                /*запись новых связей в таблицу связей*/
                 $sql = "INSERT INTO university_responsibles (unitID, responsibleID) VALUES ($unitId, $newId)";
                 $result = $this->connection->prepare($sql);
                 $result->execute();
             }
             $this->connection->commit();
-        } catch (Exeption $error) {
+            } catch (Exeption $error) {
             $this->connection->rollBack();
             echo "Error: ".$error->getMessage();
-        }
+            }
     }
 }
