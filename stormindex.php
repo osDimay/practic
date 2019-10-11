@@ -10,7 +10,7 @@ class DbClass
     private $pass;
     private $dbname;
     private $charset;
-    private $connection = 0;
+    private $connection;
 
     function __construct()
     {
@@ -26,11 +26,11 @@ class DbClass
     public function openConnection()
     {
         $this->connection= new PDO(
-    "mysql:host=$this->servername; 
+            "mysql:host=$this->servername; 
         dbname=$this->dbname;
         charset=$this->charset",
-        $this->username,
-        $this->pass
+            $this->username,
+            $this->pass
         );
     }
 
@@ -125,20 +125,12 @@ class DbClass
 
         $del = array_diff($responsibles, $usedResponsibles);
 
-        $this->connection->beginTransaction();
-        try {
-            /*удаляет непривязанных ответственных из таблицы*/
-            foreach ($del as $outDatedId) {
-                $sql = "DELETE FROM responsibles WHERE responsibleID = $outDatedId";
-                $result = $this->connection->prepare($sql);
-                $result->execute();
-            }
-            $this->connection->commit();
-        } catch (Exeption $error) {
-            $this->connection->rollBack();
-            echo "Error: ".$error->getMessage();
+        /*удаляет непривязанных ответственных из таблицы*/
+        foreach ($del as $outDatedId) {
+            $sql = "DELETE FROM responsibles WHERE responsibleID = $outDatedId";
+            $result = $this->connection->prepare($sql);
+            $result->execute();
         }
-
     }
 
     /*удаляет узел по id со всеми потомками*/
@@ -148,12 +140,13 @@ class DbClass
         try {
             /*вызов рекурсивной функции удаления узла по id со всеми потомками*/
             $this->deleteBranchRecursive($parentId);
+            /*удаляет непривязанных ответственных из таблицы*/
+            $this->deleteFreeResponsibles();
             $this->connection->commit();
         } catch (Exeption $error) {
             $this->connection->rollBack();
             echo "Error: ".$error->getMessage();
         }
-        $this->deleteFreeResponsibles();
     }
 
     /*обновляет данные таблицы по изменяемому полю, новому значению и id узла*/
@@ -203,64 +196,50 @@ class DbClass
         echo json_encode($mass);
     }
 
-    /*меняет ответственных, получая на вход id и массив с новым списком ответственных*/
-    public function updateResponsiblesForUnit($unitId, array $newResponsibles)
-    {
+    /*обновляет ответственных для узла по id и обновлённому массиву ответственных*/
+    public function updateResponsiblesForUnit($unitId, array $newResponsibles) {
         $sql="SELECT * FROM university_responsibles 
-        JOIN responsibles USING (responsibleID) WHERE university_responsibles.unitID=".$unitId;
+        JOIN responsibles USING (responsibleID)";
         $result = $this->connection->prepare($sql);
         $result->execute();
 
-        /*
-        $responsibles - массив массивов данных об ответственных (id => имя)
-        $responsibleNamess - массив имён ответственных, уже занесённых в БД
-        $responsibleIDss - массив id ответственных, уже занесённых в БД
-        */
-        $responsibles = array();
-        $responsibleNamess = array();
-        $responsibleIDss = array();
+        $oldResponsibles = array();
         while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-            $responsibles[] = array(
+            $oldResponsibles[] = array(
+                "unitID" => $row["unitID"],
                 "responsibleID" => $row["responsibleID"],
                 "responsibleName" => $row["responsibleName"]
             );
-            $responsibleNamess[] = $row["responsibleName"];
-            $responsibleIDss[] = $row["responsibleID"];
         }
 
-        /*
-        $insertion - массив новых ответственных на запись (исключаем тех, которые уже есть в таблице)
-        $equal - массив совпадающих имён в старом и новом массивах ответственных
-        $equalID - массив совпадающих id в старом и новом массивах ответственных
-        */
-        $insertion = array_diff($newResponsibles, $responsibleNamess);
-        $equal = array_intersect($responsibleNamess, $newResponsibles);
-        $equalID = array();
-        $countResponsibles = count($responsibles);
-        $countEqual = count($equal);
-        for ($i = 0; $i < $countResponsibles; $i++) {
-            for ($c = 0; $c < $countEqual; $c++) {
-                if (!strcasecmp($responsibles[$i]["responsibleName"], $equal[$c])) {
-                    $equalID[] = $responsibles[$i]["responsibleID"];
+        $newConn = array();
+        $equalNames = array();
+        foreach ($newResponsibles as $newkey => $newResp) {
+            foreach ($oldResponsibles as $oldkey => $oldResp) {
+                if  ((!strcasecmp($newResp ?? '', $oldResp["responsibleName"])) && ($oldResp["unitID"] != $unitId)) {
+                    /*заполняем массив id ответственных из других для создания связей с нашим узлом*/
+                    $newConn[] = $oldResp["responsibleID"];
+                    unset($newResponsibles[$newkey]);
+                }
+                if  ((!strcasecmp($newResp ?? '', $oldResp["responsibleName"])) && ($oldResp["unitID"] == $unitId)) {
+                    /*заполняем массив ранее записанных ответственных, повторяющихся в в этом обновлении*/
+                    $equalNames[] = $oldResp["responsibleName"];
+                    unset($newResponsibles[$newkey]);
                 }
             }
         }
-        /*$del - массив устаревших id ответственных из таблицы на удаление (те, которых нет в новом списке)*/
-        $del = array_diff($responsibleIDss, $equalID);
 
         $this->connection->beginTransaction();
         try {
-            /*удаляет устаревших ответственных из таблицы*/
-            foreach ($del as $outDatedID) {
-                $sql = "DELETE FROM responsibles WHERE responsibleID = '$outDatedID'";
+            /*создаём новые связи для ответственных, уже приписанных к другим узлам*/
+            foreach ($newConn as $newID) {
+                $sql = "INSERT INTO university_responsibles (unitID, responsibleID) VALUES ($unitId, $newID)";
                 $result = $this->connection->prepare($sql);
                 $result->execute();
             }
-
-        $newResponsibleID = array();
-            /*записывает новых ответственных в таблицу*/
-            foreach ($insertion as $newName) {
-                $sql = "INSERT INTO responsibles (responsibleName) VALUES ('$newName')";
+            /*записываем новых ответственных и связи для них*/
+            foreach ($newResponsibles as $newResp) {
+                $sql = "INSERT INTO responsibles (responsibleName) VALUES ('$newResp')";
                 $result = $this->connection->prepare($sql);
                 $result->execute();
                 $newId = $this->connection->lastInsertId();
@@ -269,10 +248,28 @@ class DbClass
                 $result = $this->connection->prepare($sql);
                 $result->execute();
             }
+            /*формируем массив устаревших ответственных на удаление*/
+            foreach ($oldResponsibles as $key => $oldResp) {
+                foreach ($equalNames as $eqName) {
+                    if  ((!strcasecmp($eqName, $oldResp["responsibleName"])) && ($oldResp["unitID"] == $unitId)) {
+                        unset($oldResponsibles[$key]);
+                    }
+                }
+            }
+            /*удаляем устаревших ответственных*/
+            foreach ($oldResponsibles as $oldResp) {
+                if ($oldResp["unitID"] == $unitId) {
+                    $sql = "DELETE FROM university_responsibles WHERE unitID = '$unitId' AND responsibleID =".$oldResp["responsibleID"];
+                    $result = $this->connection->prepare($sql);
+                    $result->execute();
+                }
+            }
+            /*удаляем ответственных, не привязанных к узлам*/
+            $this->deleteFreeResponsibles();
             $this->connection->commit();
-            } catch (Exeption $error) {
+        } catch (Exeption $error) {
             $this->connection->rollBack();
             echo "Error: ".$error->getMessage();
-            }
+        }
     }
 }
