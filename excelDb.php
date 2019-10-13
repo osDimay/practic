@@ -40,7 +40,7 @@ $style_wrap = array(
     )
 );
 
-$db = new stormproject\DbClass();
+$db = new stormProject\DbClass();
 $mass = $db->extractDataFromDb();
 $rowNumber=2;//первый ряд занят шапкой
 

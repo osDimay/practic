@@ -12,7 +12,7 @@ echo "<html><head></head><body>";
         echo "</tr>";
         echo "</thead>";
         echo "<tbody>";
-            $db = new stormproject\DbClass();
+            $db = new stormProject\DbClass();
             $mass = $db->extractDataFromDb();
             foreach ($mass as $row) {
             echo "<tr>";

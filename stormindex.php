@@ -1,23 +1,23 @@
 <?php
 
-namespace stormproject;
+namespace stormProject;
 use \PDO;
 
 class DbClass
 {
-    private $servername;
-    private $username;
+    private $serverName;
+    private $userName;
     private $pass;
-    private $dbname;
+    private $dbName;
     private $charset;
     private $connection;
 
     function __construct()
     {
-        $this->servername = 'localhost';
-        $this->username = 'root';
+        $this->serverName = 'localhost';
+        $this->userName = 'root';
         $this->pass = '';
-        $this->dbname = 'mydb';
+        $this->dbName = 'mydb';
         $this->charset = 'UTF8';
         $this->openConnection();
     }
@@ -26,11 +26,11 @@ class DbClass
     public function openConnection()
     {
         $this->connection= new PDO(
-            "mysql:host=$this->servername; 
-        dbname=$this->dbname;
+    "mysql:host=$this->serverName; 
+        dbname=$this->dbName;
         charset=$this->charset",
-            $this->username,
-            $this->pass
+        $this->userName,
+        $this->pass
         );
     }
 
@@ -89,9 +89,11 @@ class DbClass
     /*рекурсивная функция удаления узла по id со всеми потомками*/
     private function deleteBranchRecursive($parentId)
     {
-        $sql="DELETE FROM university WHERE id='".$parentId."' LIMIT 1";
+        $sql="DELETE FROM university WHERE id= :parentId LIMIT 1";
         $result = $this->connection->prepare($sql);
-        $result->execute();
+        $result->execute([
+            "parentId" => $parentId
+        ]);
 
         if (isset($parentId)) {
             $sql="SELECT * FROM university WHERE parent_id='".$parentId."'";
@@ -127,9 +129,11 @@ class DbClass
 
         /*удаляет непривязанных ответственных из таблицы*/
         foreach ($del as $outDatedId) {
-            $sql = "DELETE FROM responsibles WHERE responsibleID = $outDatedId";
+            $sql = "DELETE FROM responsibles WHERE responsibleID = :outDatedId";
             $result = $this->connection->prepare($sql);
-            $result->execute();
+            $result->execute([
+                "outDatedId" => $outDatedId
+            ]);
         }
     }
 
@@ -233,20 +237,28 @@ class DbClass
         try {
             /*создаём новые связи для ответственных, уже приписанных к другим узлам*/
             foreach ($newConn as $newID) {
-                $sql = "INSERT INTO university_responsibles (unitID, responsibleID) VALUES ($unitId, $newID)";
+                $sql = "INSERT INTO university_responsibles (unitID, responsibleID) VALUES (:unitId, :newID)";
                 $result = $this->connection->prepare($sql);
-                $result->execute();
+                $result->execute([
+                    "unitId" => $unitId,
+                    "newID" =>  $newID
+                ]);
             }
             /*записываем новых ответственных и связи для них*/
             foreach ($newResponsibles as $newResp) {
-                $sql = "INSERT INTO responsibles (responsibleName) VALUES ('$newResp')";
+                $sql = "INSERT INTO responsibles (responsibleName) VALUES (:newResp)";
                 $result = $this->connection->prepare($sql);
-                $result->execute();
+                $result->execute([
+                    "newResp" => $newResp
+                ]);
                 $newId = $this->connection->lastInsertId();
                 /*запись новых связей в таблицу связей*/
-                $sql = "INSERT INTO university_responsibles (unitID, responsibleID) VALUES ($unitId, $newId)";
+                $sql = "INSERT INTO university_responsibles (unitID, responsibleID) VALUES (:unitId, :newId)";
                 $result = $this->connection->prepare($sql);
-                $result->execute();
+                $result->execute([
+                    "unitId" => $unitId,
+                    "newId" => $newId
+                ]);
             }
             /*формируем массив устаревших ответственных на удаление*/
             foreach ($oldResponsibles as $key => $oldResp) {
@@ -259,9 +271,12 @@ class DbClass
             /*удаляем устаревших ответственных*/
             foreach ($oldResponsibles as $oldResp) {
                 if ($oldResp["unitID"] == $unitId) {
-                    $sql = "DELETE FROM university_responsibles WHERE unitID = '$unitId' AND responsibleID =".$oldResp["responsibleID"];
+                    $sql = "DELETE FROM university_responsibles WHERE unitID = :unitId AND responsibleID = :oldResp";
                     $result = $this->connection->prepare($sql);
-                    $result->execute();
+                    $result->execute([
+                        "unitId" => $unitId,
+                        "oldResp" => $oldResp["responsibleID"]
+                    ]);
                 }
             }
             /*удаляем ответственных, не привязанных к узлам*/
