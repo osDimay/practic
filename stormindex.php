@@ -150,6 +150,7 @@ class DbClass
         } catch (Exeption $error) {
             $this->connection->rollBack();
             echo "Error: ".$error->getMessage();
+            return;
         }
     }
 
@@ -165,6 +166,7 @@ class DbClass
         } catch (Exeption $error) {
             $this->connection->rollBack();
             echo "Error: ".$error->getMessage();
+            return;
         }
 
     }
@@ -182,6 +184,7 @@ class DbClass
         } catch (Exeption $error) {
             $this->connection->rollBack();
             echo "Error: ".$error->getMessage();
+            return;
         }
     }
 
@@ -275,7 +278,7 @@ class DbClass
                     $result = $this->connection->prepare($sql);
                     $result->execute([
                         "unitId" => $unitId,
-                        "oldResp" => $oldResp["responsibleID"]
+                        "oldRes" => $oldResp["responsibleID"]
                     ]);
                 }
             }
@@ -285,6 +288,7 @@ class DbClass
         } catch (Exeption $error) {
             $this->connection->rollBack();
             echo "Error: ".$error->getMessage();
+            return;
         }
     }
 }
