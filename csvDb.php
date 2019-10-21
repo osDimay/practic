@@ -6,9 +6,10 @@ include 'stormindex.php';
 use \Exception;
 use \PDO;
 
-/*FILESIZE - максимальный размер файла в байтах*/
+/*FILESIZE - максимальный размер файла в байтах
+FIELDSNUMBER - кол-во полей, требуемых на ввод
+FILETYPE - тип загружаемого файла*/
 const FILESIZE = 2048;
-/*FIELDSNUMBER - кол-во полей, требуемых на ввод*/
 const FIELDSNUMBER = 3;
 const FILETYPE = 'application/vnd.ms-excel';
 
@@ -80,30 +81,23 @@ if ($_FILES['inputfile']['size'] > FILESIZE) {
     throw new Exception("File size exceed. File not uploaded");
 }
 
-echo json_encode('File Uploaded');
-
-try {
-    $fileDir = $_FILES['inputfile']['tmp_name'];
-    $lines = array();
-    $key = 0;
-    $fp = fopen("$fileDir", "r");
-    while (($line = fgetcsv($fp, 100, ";", '"')) !== FALSE) {
-        $key++;
-        /*Проверка количества полей в строке*/
-        if (count($line) !== FIELDSNUMBER) {
-            throw new Exception("Wrong number of parameters on line $key");
-        } else {
-            foreach ($line as $key => $field) {
-                $line[$key] = trim($field);
-            }
-            $lines[] = $line;
+$fileDir = $_FILES['inputfile']['tmp_name'];
+$lines = array();
+$key = 0;
+$fp = fopen("$fileDir", "r");
+while (($line = fgetcsv($fp, 100, ";", '"')) !== FALSE) {
+    $key++;
+    /*Проверка количества полей в строке*/
+    if (count($line) !== FIELDSNUMBER) {
+        throw new Exception("Wrong number of parameters on line $key");
+    } else {
+        foreach ($line as $key => $field) {
+            $line[$key] = trim($field);
         }
+        $lines[] = $line;
     }
-    fclose($fp);
-} catch (Exception $e) {
-    echo json_encode('Error: ' . $e->getMessage());
-    return;
 }
+fclose($fp);
 
 /*проверка формы файла*/
 $problems = array();
@@ -144,6 +138,7 @@ if (!empty($problems)) {
         echo "Error: " . $error->getMessage();
         return;
     }
+    echo json_encode('File Uploaded');
 }
 
 
