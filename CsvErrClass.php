@@ -31,13 +31,9 @@ class CsvErrClass
                 break;
             case 4:
                 $this->errCode = $Code;
-                $this->description = "Numeric data in name field";
-                break;
-            case 5:
-                $this->errCode = $Code;
                 $this->description = "Field name doesn't exist";
                 break;
-            case 6:
+            case 5:
                 $this->errCode = $Code;
                 $this->description = "Field name length > 255";
                 break;
