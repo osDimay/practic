@@ -115,12 +115,10 @@ foreach ($lines as $key => $line) {
         $problems = addProblem($key, 3, $problems);
     }
     /*Проверка поля name*/
-    if (is_numeric($line[2])) {
+    if (strlen($line[2]) == 0) {
         $problems = addProblem($key, 4, $problems);
-    } elseif (strlen($line[2]) == 0) {
-        $problems = addProblem($key, 5, $problems);
     } elseif (strlen($line[2]) > 255) {
-        $problems = addProblem($key, 6, $problems);
+        $problems = addProblem($key, 5, $problems);
     }
 }
 
